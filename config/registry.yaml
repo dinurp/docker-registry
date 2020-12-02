@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+  namespace: kube-public
+  # labels:
+  #   authenticated: "false"
+spec:
+  type: NodePort
+  selector:
+    run: local-registry
+  ports:
+  - protocol: TCP
+    port: 32433
+    targetPort: registry
+    nodePort: 32433     
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-ui
+  namespace: kube-public
+spec:
+  type: NodePort
+  selector:
+    run: local-registry
+  ports:
+  - protocol: TCP
+    port: 32080
+    targetPort: registry-ui
+    nodePort: 32080     
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry-deployment
+  namespace:  kube-public
+spec:
+  selector:
+    matchLabels:
+      run: local-registry
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: local-registry
+    spec:
+      containers:
+      - name: registry
+        image: registry:2
+        resources:
+          limits:
+            memory: 128Mi
+            cpu: "0.2"
+          # requests:
+          #   memory: 256Mi
+          #   cpu: "0.2"        
+        volumeMounts:
+        - name: ssl-certificates
+          mountPath: /certs
+        - name: authentication
+          mountPath: /auth
+        - name: image-storage
+          mountPath: /var/lib/registry          
+        env:
+        - name: REGISTRY_HTTP_ADDR
+          value: 0.0.0.0:8433
+        - name: REGISTRY_HTTP_TLS_CERTIFICATE
+          value: /certs/my-registry.crt
+        - name: REGISTRY_HTTP_TLS_KEY
+          value: /certs/my-registry.key
+        - name: REGISTRY_HTTP_SECRET
+          value: secret       
+        - name: REGISTRY_HTTP_HEADERS_Access-Control-Allow-Origin
+          value: "['*']"
+        ports:
+        - containerPort: 8433
+          name: registry
+          protocol: TCP
+      - name: registry-ui
+        image: joxit/docker-registry-ui:static
+        resources:
+          limits:
+            memory: 64Mi
+            cpu: "0.1"
+          # requests:
+          #   memory: 256Mi
+          #   cpu: "0.2"
+        env:
+        - name: URL
+          value: https://registry:32433 
+        - name: DELETE_IMAGES
+          value: 'true'
+        ports:
+        - containerPort: 80
+          name: registry-ui
+          protocol: TCP          
+      volumes:
+      - name: ssl-certificates
+        secret: 
+          secretName: registry-server-certs
+      - name: authentication
+        secret: 
+          secretName: registry-server-auth
+      - name: image-storage
+        hostPath:
+          type: DirectoryOrCreate
+          path: /var/lib/registry

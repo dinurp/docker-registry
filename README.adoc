@@ -1,0 +1,53 @@
+= Docker registry for K8S on Docker Desktop
+
+. Pull the required images
+[source, sh]
+docker pull joxit/docker-registry-ui:static
+docker pull registry:2
+
+. Secrets and Certificates
+** Create self-signed certificates 
+[source, sh]
+gen-certs.sh
+** Create htpasswd
+** create secrets
+[source, sh]
+create-secrets.sh
+
+. Deploy registry
+[source, sh]
+kubectl apply -f config/registry.yaml
+
+** Service for UI on `nodeport 32080`
+** Service for registry on `nodeport 32433`
+** Deployment of registry and UI
+
+. Service for short DNS entry [optional] 
+[source, sh]
+kubectl apply -f config/default-service.yaml
+
+. Update `hosts` file in `C:\Windows\System32\drivers\etc\`. _You need adminstrator rights to update the file._
+[source, sh]
+#local docker image registry 
+127.0.0.1 registry.kube-public.svc.cluster.local registry.kube-public registry 
+
+
+. Trust the certificate
+
+** Copy the certificate to a Windows temporary directory
+c:\[source, sh]
+cp certs/my-registry.crt /mnt/c/Temp/
+
+** Open *Power Shell* as administrator
+[source, ps2]
+Import-Certificate -FilePath C:\Temp\my-registry.crt -CertStoreLocation Cert:\LocalMachine\Root
+
+. Checkout your new local registry
+
+** from browser visit http://registry:32080/[registry UI]
+** `curl` from *Power Shell* 
+[source, ps2]
+curl https://registry:32433/v2/_catalog | fl StatusCode, Content, Headers
+
+** push an image to the new registry
+[source, sh]

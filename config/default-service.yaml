@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+  namespace: default
+  labels:
+    authenticated: "false"
+spec:
+  type: ExternalName
+  externalName: registry.kube-public.svc.cluster.local

@@ -1,0 +1,4 @@
+auth/htpasswd
+certs/my-registry.crt
+certs/my-registry.key
+var
