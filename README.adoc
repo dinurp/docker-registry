@@ -45,9 +45,14 @@ Import-Certificate -FilePath C:\Temp\my-registry.crt -CertStoreLocation Cert:\Lo
 . Checkout your new local registry
 
 ** from browser visit http://registry:32080/[registry UI]
-** `curl` from *Power Shell* 
+** use `curl` from *Power Shell* to look at the registry api 
 [source, ps2]
 curl https://registry:32433/v2/_catalog | fl StatusCode, Content, Headers
 
 ** push an image to the new registry
 [source, sh]
+docker tag registry:2 registry:32433/temp/local-registry:2
+docker push registry:32433/temp/local-registry:2
+
+** checkout the pushed image in http://registry:32080/[registry UI] 
+
