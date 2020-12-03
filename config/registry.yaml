@@ -107,6 +107,55 @@ spec:
         secret: 
           secretName: registry-server-auth
       - name: image-storage
-        hostPath:
-          type: DirectoryOrCreate
-          path: /var/lib/registry
+      #   hostPath:
+      #     type: DirectoryOrCreate
+      #     path: /var/lib/registry
+        persistentVolumeClaim:
+          claimName: image-storage-pvc
+--- 
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: image-storage-pv
+  namespace: kube-public  
+  labels:
+    purpose: local-registry-image-storage
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /var/lib/local-registry
+    # maps to \\wsl$\docker-desktop-data\version-pack-data\community\local-registry
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - docker-desktop
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: image-storage-pvc
+  namespace: kube-public  
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-storage
+  selector:
+    matchLabels:
+      purpose: local-registry-image-storage
