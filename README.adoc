@@ -34,8 +34,8 @@ kubectl apply -f config/default-service.yaml
 
 . Trust the certificate
 
-** Copy the certificate to a Windows temporary directory
-c:\[source, sh]
+** Copy the certificate to a Windows directory
+[source, sh]
 cp certs/my-registry.crt /mnt/c/Temp/
 
 ** Open *Power Shell* as administrator
